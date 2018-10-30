@@ -95,13 +95,13 @@ class adb
         $this->uri = "$this->host:$this->port";
 
         if (!`which adb`) {
-            $success = false;
-            $error_msg = "ADB doesn't exist.";
+            $this->success = false;
+            $this->error_msg = "ADB doesn't exist.";
         }else{
             $this->success = true;
         }
 
-        return ['success' => $success, 'error_msg' => $error_msg];
+        return ['success' => $this->success, 'error_msg' => $this->error_msg];
     }
 
     public function turnOff()
