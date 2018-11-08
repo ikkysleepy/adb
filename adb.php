@@ -10,12 +10,18 @@ class adb
     public $uri;
     public $log;
     public $isDeviceConnected;
+    public $isUnauthorized;
+    public $isError;
+    public $isUnable;
     public $isDisplayOn;
 
     function __construct()
     {
         $this->log = '/var/log/adb.txt';
         $this->isDeviceConnected = false;
+        $this->isUnauthorized = false;
+        $this->isUnable = false;
+        $this->isError = false;
         $this->isDisplayOn = false;
         $this->success = false;
         $this->error_msg = "";
@@ -59,16 +65,19 @@ class adb
     {
         if (strpos($results, 'unauthorized') !== false) {
             $this->log("Connection is unauthorized to $this->uri");
+            $this->isUnauthorized = true;
             return false;
         }
 
         if (strpos($results, 'unable') !== false) {
             $this->log("Failed to connect to $this->uri");
+            $this->isUnable = true;
             return false;
         }
-        
+
         if (strpos($results, 'error') !== false) {
             $this->log("General error with device $this->uri");
+            $this->isError = true;
             return false;
         }
 
@@ -77,10 +86,17 @@ class adb
 
     public function connectToDevice()
     {
-        if ($this->getDeviceConnectionStatus()) {
+        $results = $this->getDeviceConnectionStatus();
+        if ($results) {
             $this->log("Device is already connected to $this->uri");
             return true;
         } else {
+
+            if($this->isUnauthorized || $this->isUnable || $this->isError){
+                $this->myShellExec("adb disconnect $this->uri;");
+                return false;
+            }
+
             $this->log("Connecting to $this->uri");
             $results = $this->myShellExec("adb connect $this->uri;");
             return $this->checkResponse($results);
@@ -108,14 +124,16 @@ class adb
     {
         $this->log("Turning off Display on $this->uri");
         $this->isDeviceConnected = $this->connectToDevice();
-        $this->isDisplayOn = $this->getDisplayPowerStatus();
-        if ($this->isDisplayOn) {
-            $this->sendKey("KEYCODE_POWER");
+        if ($this->isDeviceConnected) {
             $this->isDisplayOn = $this->getDisplayPowerStatus();
-
-            if($this->isDisplayOn){
-                $this->sendKey("KEYCODE_SLEEP");
+            if ($this->isDisplayOn) {
+                $this->sendKey("KEYCODE_POWER");
                 $this->isDisplayOn = $this->getDisplayPowerStatus();
+
+                if ($this->isDisplayOn) {
+                    $this->sendKey("KEYCODE_SLEEP");
+                    $this->isDisplayOn = $this->getDisplayPowerStatus();
+                }
             }
         }
 
