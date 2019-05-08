@@ -17,7 +17,7 @@ class adb
 
     function __construct()
     {
-        $this->log = '/var/log/adb.txt';
+        $this->logFile = '/var/log/adb.txt';
         $this->isDeviceConnected = false;
         $this->isUnauthorized = false;
         $this->isUnable = false;
@@ -27,10 +27,10 @@ class adb
         $this->error_msg = "";
     }
 
-    private function log($msg)
+    private function elog($msg)
     {
         if (!empty(trim($msg))) {
-            file_put_contents($this->log, $msg . PHP_EOL, FILE_APPEND | LOCK_EX);
+            file_put_contents($this->logFile, $msg . PHP_EOL, FILE_APPEND | LOCK_EX);
         }
     }
 
@@ -43,7 +43,7 @@ class adb
 
         $value = $returnVal ? $lastLine : $strOutput;
         if (!empty(trim($value))) {
-            file_put_contents($this->log, $value . PHP_EOL, FILE_APPEND | LOCK_EX);
+            file_put_contents($this->logFile, $value . PHP_EOL, FILE_APPEND | LOCK_EX);
         }
 
         return $value;
@@ -64,19 +64,19 @@ class adb
     private function checkResponse($results)
     {
         if (strpos($results, 'unauthorized') !== false) {
-            $this->log("Connection is unauthorized to $this->uri");
+            $this->elog("Connection is unauthorized to $this->uri");
             $this->isUnauthorized = true;
             return false;
         }
 
         if (strpos($results, 'unable') !== false) {
-            $this->log("Failed to connect to $this->uri");
+            $this->elog("Failed to connect to $this->uri");
             $this->isUnable = true;
             return false;
         }
 
         if (strpos($results, 'error') !== false) {
-            $this->log("General error with device $this->uri");
+            $this->elog("General error with device $this->uri");
             $this->isError = true;
             return false;
         }
@@ -88,7 +88,7 @@ class adb
     {
         $results = $this->getDeviceConnectionStatus();
         if ($results) {
-            $this->log("Device is already connected to $this->uri");
+            $this->elog("Device is already connected to $this->uri");
             return true;
         } else {
 
@@ -97,7 +97,7 @@ class adb
                 return false;
             }
 
-            $this->log("Connecting to $this->uri");
+            $this->elog("Connecting to $this->uri");
             $results = $this->myShellExec("adb connect $this->uri;");
             return $this->checkResponse($results);
         }
@@ -122,7 +122,7 @@ class adb
 
     public function turnOff()
     {
-        $this->log("Turning off Display on $this->uri");
+        $this->elog("Turning off Display on $this->uri");
         $this->isDeviceConnected = $this->connectToDevice();
         if ($this->isDeviceConnected) {
             $this->isDisplayOn = $this->getDisplayPowerStatus();
@@ -153,7 +153,7 @@ class adb
 
     public function turnOnAndConnect()
     {
-        $this->log("Turning on Display on $this->uri");
+        $this->elog("Turning on Display on $this->uri");
         $this->isDeviceConnected = $this->connectToDevice();
         if ($this->isDeviceConnected) {
             $this->isDisplayOn = $this->getDisplayPowerStatus();
@@ -184,7 +184,7 @@ class adb
 
     public function turnOnAndConnectAndLaunch($package)
     {
-        $this->log("Turning on $package on $this->uri");
+        $this->elog("Turning on $package on $this->uri");
         $connected = $this->turnOnAndConnect();
         if ($connected['success']) {
             $this->sendKey("KEYCODE_WAKEUP");
@@ -201,7 +201,7 @@ class adb
 
     public function turnOnAndConnectAndLaunchNetflixWithVideoId($id = null)
     {
-        $this->log("Turning on Netflix with Video ID: $id on $this->uri");
+        $this->elog("Turning on Netflix with Video ID: $id on $this->uri");
         $connected = $this->turnOnAndConnect();
         if (!empty($id)) {
             if ($connected['success']) {
@@ -219,7 +219,7 @@ class adb
 
     public function sendKey($keys)
     {
-        $this->log("Sending keys $keys on $this->uri");
+        $this->elog("Sending keys $keys on $this->uri");
         $results = $this->myShellExec("adb -s $this->uri shell input keyevent $keys;");
         return $this->checkResponse($results);
     }
