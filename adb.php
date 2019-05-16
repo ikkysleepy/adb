@@ -14,6 +14,7 @@ class adb
     public $isError;
     public $isUnable;
     public $isDisplayOn;
+    public $logFile;
 
     function __construct()
     {
