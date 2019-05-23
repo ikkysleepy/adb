@@ -9,7 +9,7 @@
 require_once ('adb.php');
 
 $adb = new adb();
-$adb->setDevice(['host' => '192.168.10.113', 'port' => 5555]);
+$setDevice = $adb->setDevice(['host' => '192.168.10.113', 'port' => 5555]);
 
 if($setDevice['success']) {
 
